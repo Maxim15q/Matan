@@ -1,0 +1,55 @@
+from manim import *
+
+eq = input('Оснащение (right/left/center): ')
+point = int(input('Количество точек разбиения: '))
+
+def mat():
+    if eq == 'right':  # правое оснащение
+        c1,c2 = 0,0 #обнуляем счетчики
+        for i in range(point):
+            c1 += (1 / point) * (np.exp(-1 * ((i + 1) / point)))  # площадь правой части графика
+            c2 += (1 / point) * (np.exp(1-((i + 1) / point))) # площадь левой части
+        return c1+c2  # возврат суммы площадей правой и левой части
+    elif eq == 'left':  # левое оснащение
+        c1,c2 = 0,0
+        for i in range(point):
+            c1 += (1 / point) * (np.exp(-1 * (i / point)))
+            c2 += (1 / point) * (np.exp(1-(i / point)))
+        return c1 + c2
+    elif eq == 'center':  # среднее оснащение
+        c1,c2 = 0,0
+        for i in range(point):
+            c1 += (1 / point) * (np.exp(-1 * (i / point + 1 / (point * 2))))
+            c2 += (1 / point) * (np.exp(1-(i / point + 1 / (point * 2))))
+        return c1+c2
+
+class Lab(Scene):
+    def construct(self):
+        axes = Axes(  # координатные оси
+            x_range=[-2, 2, 0.5], #деления оси x
+            y_range=[0, 3, 0.5],
+            x_axis_config={"numbers_to_include": np.arange(-2, 2)}, #подпись оси x
+            y_axis_config={"numbers_to_include": np.arange(0, 3)}
+        )
+        title = Tex(  # информация о графике
+            f'Integral sum: {mat()}',
+            font_size=30,
+            color=WHITE
+        ).next_to(axes, UP * 2) #местоположение - над осями
+
+        labels = axes.get_axis_labels()  # оси
+        exp = axes.plot(lambda x: np.exp(-1*x), x_range=[-1, 1], color=GREEN)  # график функции, согласно варианту
+        label = axes.get_graph_label(exp, label="y=e^{-x} \ [-1,1]").next_to(exp,RIGHT)  # подпись графика
+        rect = axes.get_riemann_rectangles(  # прямоугольники Римана
+            exp,
+            color=(YELLOW, RED),
+            fill_opacity=0.5,  # прозрачность
+            x_range=[-1, 1],  # данный промежуток
+            dx=1 / point,  # мелкость
+            input_sample_type=eq,  # выбор оснащения
+        )
+
+        self.add(axes, labels, label, exp)  # добавление элементов на задний фон
+        self.play(Write(title)) #печать заголовка
+        self.play(Create(rect), run_time=2)  # анимация
+        self.wait(1) # ожидание, для корректного отображения
